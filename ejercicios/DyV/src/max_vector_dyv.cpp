@@ -26,11 +26,10 @@ int max(int a, int b)
 
 int calcula_max_dyv(vector<int> &v, int inicio, int final)
 {
-	const static int umbral = final/2+1;
-	if(final-inicio>umbral)
+	if(final-inicio>10)
 	{
-		int a = calcula_max_dyv(v, inicio, final/2);
-		int b = calcula_max_dyv(v, final/2, final);
+		int a = calcula_max_dyv(v, inicio, (inicio+final)/2);
+		int b = calcula_max_dyv(v, (inicio+final)/2, final);
 		return max(a,b);
 	}
 	else
