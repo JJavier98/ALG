@@ -156,6 +156,14 @@ bool semiAislado(const nodo & n)
 		return false;
 }
 
+bool completo(nodo & n)
+{
+	if (n.vecino1 != -1 and n.vecino2 != -1)
+		return true;
+	else
+		return false;
+}
+
 pair<int, int> caminoMinimo(map<int, pair<double, double> > & M, vector< nodo > & visitados, const int tamanio, double & distancia_total)
 {
 	pair<int, int> nodos;
@@ -166,7 +174,7 @@ pair<int, int> caminoMinimo(map<int, pair<double, double> > & M, vector< nodo > 
 	{
 		for (int j = i+1; j <= tamanio; ++j)
 		{
-			if(aislado(visitados[i]) or aislado(visitados[j]))
+			if( ( aislado(visitados[i]) and ( aislado(visitados[j]) or semiAislado(visitados[j]) ) or ( aislado(visitados[i]) and ( aislado(visitados[j]) or semiAislado(visitados[j])))))
 			{
 				double dist = calculaDistacia(M[i], M[j]);
 				if(dist < minimo)
@@ -188,9 +196,9 @@ pair<int, int> caminoMinimo(map<int, pair<double, double> > & M, vector< nodo > 
 
 		distancia_total += minimo;
 
-		/*if(pop_count(visitados[nodos.first]) == 2)
+		/*if(completo(visitados[nodos.first]))
 			M.erase(nodos.first);
-		if(pop_count(visitados[nodos.second]) == 2)
+		if(completo(visitados[nodos.second]))
 			M.erase(nodos.second);*/
 	}
 
@@ -207,18 +215,15 @@ pair<int, int> unirSubgrafos(map<int, pair<double, double> > & M, vector< nodo >
 	{
 		for (int j = i+1; j <= tamanio; ++j)
 		{
-			if(semiAislado(visitados[i]) and semiAislado(visitados[j]) /*and !estaEnlazado(visitados, i, j)*/)
+			if(semiAislado(visitados[i]) and semiAislado(visitados[j]) and !estaEnlazado(visitados, i, j))
 			{
-				if(!estaEnlazado(visitados, i, j))
+				double dist = calculaDistacia(M[i], M[j]);
+				if(dist < minimo)
 				{
-					double dist = calculaDistacia(M[i], M[j]);
-					if(dist < minimo)
-					{
-						haEntrado = true;
-						minimo = dist;
-						nodos.first = i;
-						nodos.second = j;
-					}
+					haEntrado = true;
+					minimo = dist;
+					nodos.first = i;
+					nodos.second = j;
 				}
 			}
 		}
@@ -232,18 +237,19 @@ pair<int, int> unirSubgrafos(map<int, pair<double, double> > & M, vector< nodo >
 
 		distancia_total += minimo;
 
-		/*if(pop_count(visitados[nodos.first]) == 2)
+		/*if(completo(visitados[nodos.first]))
 			M.erase(nodos.first);
-		if(pop_count(visitados[nodos.second]) == 2)
+		if(completo(visitados[nodos.second]))
 			M.erase(nodos.second);*/
 	}
 
 	return nodos;
 }
 
-pair<int, int> ultimaUnion(map<int, pair<double, double> > & M, vector< nodo > & visitados, const int tamanio)
+pair<int, int> ultimaUnion(map<int, pair<double, double> > & M, vector< nodo > & visitados, const int tamanio, double & distancia_total)
 {
 	pair<int, int> 	nodos;
+	double dist;
 
 	for (int i = 1; i <= tamanio-1; ++i)
 	{
@@ -251,6 +257,7 @@ pair<int, int> ultimaUnion(map<int, pair<double, double> > & M, vector< nodo > &
 		{
 			if(semiAislado(visitados[i]) and semiAislado(visitados[j]) and estaEnlazado(visitados, i, j))
 			{
+				dist = calculaDistacia(M[i], M[j]);
 				nodos.first = i;
 				nodos.second = j;
 			}
@@ -258,6 +265,7 @@ pair<int, int> ultimaUnion(map<int, pair<double, double> > & M, vector< nodo > &
 	}
 
 	enlazar(visitados, nodos.first, nodos.second);
+	distancia_total += dist;
 
 	return nodos;
 }
@@ -265,7 +273,7 @@ pair<int, int> ultimaUnion(map<int, pair<double, double> > & M, vector< nodo > &
 int main(int argc, char * argv[])
 {
   
-	map<int, pair<double, double> >  M;
+	map<int, pair<double, double> >  M, M_copia;
 	vector< nodo > visitados;
 	set< pair<int, int> > orden;
 	string fp;
@@ -279,6 +287,8 @@ int main(int argc, char * argv[])
    
     fp = argv[1];
     leer_puntos(fp, M);
+
+    M_copia = M;
 
     visitados.reserve(M.size());
     nodo null;
@@ -304,18 +314,28 @@ int main(int argc, char * argv[])
     	union_ = unirSubgrafos(M, visitados, M.size(), distancia_total);
     }
 
-    union_ = ultimaUnion(M, visitados, M.size());
+    union_ = ultimaUnion(M, visitados, M.size(), distancia_total);
     orden.insert(union_);
 
+/*
+    for (set< pair<int, int> >::iterator it = orden.begin(); it != orden.end(); ++it)
+    {
+    	cout << it->first << " " << it->second << endl;
+    }
+*/
+
+    //vector<int> v_secuencia;
 
     ofstream fs("orden_nodos.txt");
 
     fs << "DIMENSION: " << visitados.size()-1 << endl;
 
     set< pair<int, int> >::iterator it = orden.begin();
+    //v_secuencia.push_back(it->first);
+   // v_secuencia.push_back(it->second);
 
-    fs << " " << it->first << " " << M[it->first].first << " " << M[it->first].second << endl;
-	fs << " " << it->second << " " << M[it->second].first << " " << M[it->second].second << endl;
+    fs << " " << it->first << " " << M_copia[it->first].first << " " << M_copia[it->first].second << endl;
+	fs << " " << it->second << " " << M_copia[it->second].first << " " << M_copia[it->second].second << endl;
 
 	int ultimo = it->second;
 	orden.erase(it);
@@ -336,13 +356,15 @@ int main(int argc, char * argv[])
     {
     	if(ultimo == it->first)
     	{
-	    	fs << " " << it->second << " " << M[it->second].first << " " << M[it->second].second << endl;
+	    	fs << " " << it->second << " " << M_copia[it->second].first << " " << M_copia[it->second].second << endl;
 	    	ultimo = it->second;
+	    	//v_secuencia.push_back(ultimo);
     	}
 	    else
 	    {
-	    	fs << " " << it->first << " " << M[it->first].first << " " << M[it->first].second << endl;
+	    	fs << " " << it->first << " " << M_copia[it->first].first << " " << M_copia[it->first].second << endl;
 	    	ultimo = it->first;
+	    	//v_secuencia.push_back(ultimo);
 	    }
 
 		orden.erase(it);
@@ -357,7 +379,14 @@ int main(int argc, char * argv[])
 	    if(it==orden.end())
     		salir = true;
 	}
+/*
+	distancia_total = 0;
 
+	for (int i = 0; i < v_secuencia.size()-1; ++i)
+	{
+		distancia_total += calculaDistacia(M[v_secuencia[i]], M[v_secuencia[i+1]]);
+	}
+*/
 	fs << "DISTANCIA TOTAL: " << distancia_total << endl;
 
     fs.close();
