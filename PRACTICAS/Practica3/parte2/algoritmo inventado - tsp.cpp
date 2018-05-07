@@ -174,7 +174,8 @@ pair<int, int> caminoMinimo(map<int, pair<double, double> > & M, vector< nodo > 
 	{
 		for (int j = i+1; j <= tamanio; ++j)
 		{
-			if( ( aislado(visitados[i]) and ( aislado(visitados[j]) or semiAislado(visitados[j]) ) or ( aislado(visitados[i]) and ( aislado(visitados[j]) or semiAislado(visitados[j])))))
+			if( ( aislado(visitados[i]) and ( aislado(visitados[j]) or semiAislado(visitados[j]) ) or ( aislado(visitados[i]) and ( aislado(visitados[j]) or semiAislado(visitados[j])))) or
+			 (semiAislado(visitados[i]) and semiAislado(visitados[j]) and !estaEnlazado(visitados, i, j)) )
 			{
 				double dist = calculaDistacia(M[i], M[j]);
 				if(dist < minimo)
@@ -307,13 +308,13 @@ int main(int argc, char * argv[])
     	camino = caminoMinimo(M, visitados, visitados.size(), distancia_total);
     }
 
-    pair<int, int> union_ = unirSubgrafos(M, visitados, M.size(), distancia_total);
+    pair<int, int> union_ ;/*= unirSubgrafos(M, visitados, M.size(), distancia_total);
     while(union_.first != -1)
     {
     	orden.insert(union_);
     	union_ = unirSubgrafos(M, visitados, M.size(), distancia_total);
     }
-
+*/
     union_ = ultimaUnion(M, visitados, M.size(), distancia_total);
     orden.insert(union_);
 
